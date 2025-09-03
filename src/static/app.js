@@ -4,17 +4,40 @@ document.addEventListener("DOMContentLoaded", () => {
   const signupForm = document.getElementById("signup-form");
   const messageDiv = document.getElementById("message");
 
+    // Toolbar controls
+    const filterInput = document.getElementById("filter-text");
+    const sortSelect = document.getElementById("sort-select");
+
   // Function to fetch activities from API
   async function fetchActivities() {
     try {
       const response = await fetch("/activities");
       const activities = await response.json();
 
-      // Clear loading message
+      // Clear loading message and dropdown
       activitiesList.innerHTML = "";
+      activitySelect.innerHTML = "";
+
+      // Get filter and sort values
+      const filterText = filterInput?.value?.toLowerCase() || "";
+      const sortValue = sortSelect?.value || "name";
+
+      // Convert activities to array for sorting/filtering
+      let activityArray = Object.entries(activities);
+      if (filterText) {
+        activityArray = activityArray.filter(([name, details]) =>
+          name.toLowerCase().includes(filterText) ||
+          details.description.toLowerCase().includes(filterText)
+        );
+      }
+      if (sortValue === "name") {
+        activityArray.sort((a, b) => a[0].localeCompare(b[0]));
+      } else if (sortValue === "participants") {
+        activityArray.sort((a, b) => b[1].participants.length - a[1].participants.length);
+      }
 
       // Populate activities list
-      Object.entries(activities).forEach(([name, details]) => {
+      activityArray.forEach(([name, details]) => {
         const activityCard = document.createElement("div");
         activityCard.className = "activity-card";
 
@@ -157,4 +180,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Initialize app
   fetchActivities();
+
+  // Add filter/sort event listeners
+  filterInput?.addEventListener("input", fetchActivities);
+  sortSelect?.addEventListener("change", fetchActivities);
 });
